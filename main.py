@@ -4,7 +4,7 @@ from transformers import pipeline
 import zlib, os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-app = FastAPI()
+app = FastAPI(title="CrypTalk Backend")
 
 emotion_classifier = pipeline(
     "text-classification",
@@ -33,10 +33,13 @@ def decrypt(encrypted, key, nonce):
     aes = AESGCM(key)
     return aes.decrypt(nonce, encrypted, None)
 
+@app.get("/")
+def root():
+    return {"status": "CrypTalk backend is running"}
+
 @app.post("/send")
 def send_message(msg: Message):
     emotion = emotion_classifier(msg.text)[0][0]["label"]
-
     tagged = f"[EMOTION: {emotion.upper()}] {msg.text}"
 
     compressed = compress(tagged)
@@ -49,4 +52,3 @@ def send_message(msg: Message):
         "emotion": emotion,
         "final_message": final_text
     }
-
